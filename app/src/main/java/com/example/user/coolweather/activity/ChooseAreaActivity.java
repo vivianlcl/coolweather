@@ -1,9 +1,11 @@
 package com.example.user.coolweather.activity;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.AdapterView;
@@ -15,7 +17,7 @@ import android.widget.Toast;
 import com.example.user.coolweather.R;
 import com.example.user.coolweather.model.City;
 import com.example.user.coolweather.model.CoolWeatherDB;
-import com.example.user.coolweather.model.Country;
+import com.example.user.coolweather.model.County;
 import com.example.user.coolweather.model.Province;
 import com.example.user.coolweather.util.HttpCallbackListener;
 import com.example.user.coolweather.util.HttpUtil;
@@ -24,11 +26,11 @@ import com.example.user.coolweather.util.Utility;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChooseAreaActivity extends ActionBarActivity {
+public class ChooseAreaActivity extends Activity {
 
     public static final int LEVEL_PROVINCE = 0;
     public static final int LEVEL_CITY = 1;
-    public static final int LEVEL_COUNTRY = 1;
+    public static final int LEVEL_County = 1;
 
     private ProgressDialog progressDialog;
     private TextView titleText;
@@ -39,12 +41,11 @@ public class ChooseAreaActivity extends ActionBarActivity {
 
     private List<Province> provinceList;
     private List<City> cityList;
-    private List<Country> countryList;
+    private List<County> countyList;
 
 
     private Province selectedProvince;
     private City selectedCity;
-    private Country selectedCountry;
 
     private int currentLevel;
 
@@ -62,33 +63,37 @@ public class ChooseAreaActivity extends ActionBarActivity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int index, long l) {
-                if (currentLevel == LEVEL_PROVINCE){
-                   selectedProvince = provinceList.get(index);
-                   queryCities();
-               }else if (currentLevel == LEVEL_CITY){
-                   selectedCity = cityList.get(index);
-                   queryCountries();
+                if (currentLevel == LEVEL_PROVINCE) {
+                    selectedProvince = provinceList.get(index);
+                    queryCities();
+                } else if (currentLevel == LEVEL_CITY) {
+                    selectedCity = cityList.get(index);
+                    queryCounties();
                }
             }
         });
-        queryProvinces();
+       // queryProvinces();
     }
+
 
     private void queryProvinces(){
         provinceList = coolWeatherDB.provincesLoader();
+        Log.d("LCL","provinceList.size()"+provinceList.size());
         if (provinceList.size() > 0){
             datalist.clear();
+           int  i =0;
             for (Province province:provinceList){
-                datalist.add(province.getProvinceName());
+                Log.d("LCL","province:"+provinceList.get(i).getProvinceName());
+                datalist.add(provinceList.get(i++).getProvinceName());
+                Log.d("LCL", "datalist:" + datalist.get(i-1));
             }
-
             adapter.notifyDataSetChanged();
             listView.setSelection(0);
             titleText.setText("中国");
             currentLevel = LEVEL_PROVINCE;
         }
         else {
-            queryFromServer(null,"provinces");
+            queryFromServer(null,"province");
         }
     }
 
@@ -110,25 +115,27 @@ public class ChooseAreaActivity extends ActionBarActivity {
         }
     }
 
-    private void queryCountries(){
-        countryList = coolWeatherDB.countriesLoader(selectedCity.getId());
-        if (countryList.size() > 0){
+    private void queryCounties(){
+        countyList = coolWeatherDB.countiesLoader(selectedCity.getId());
+        if (countyList.size() > 0){
             datalist.clear();
-            for (Country country:countryList){
-                datalist.add(country.getCountryName());
+            for (County county:countyList){
+                datalist.add(county.getCountyName());
             }
 
             adapter.notifyDataSetChanged();
             listView.setSelection(0);
             titleText.setText(selectedCity.getCityName());
-            currentLevel = LEVEL_COUNTRY;
+            currentLevel = LEVEL_County;
         }else {
-            queryFromServer(selectedCity.getCityCode(),"country");
+            queryFromServer(selectedCity.getCityCode(),"county");
         }
     }
 
     public void queryFromServer(final String code,final String type){
         String address;
+        Log.d("LCL","code:"+code+",type:"+type);
+
         if (!TextUtils.isEmpty(code)){
             address = "http://www.weather.com.cn/data/list3/city" + code + ".xml";
         }else {
@@ -139,15 +146,18 @@ public class ChooseAreaActivity extends ActionBarActivity {
         HttpUtil.sendHttpRequest(address, new HttpCallbackListener() {
             @Override
             public void onFinish(String response) {
+                Log.d("LCL","onFinish...."+"response:"+response);
                 boolean result = false;
+                Log.d("LCL","type:"+type);
                 if ("province".equals(type)) {
+                    Log.d("LCL","\"province\".equals(type)");
                     result = Utility.handleProvincesResponse(coolWeatherDB, response);
                 }else if ("city".equals(type)){
                     result = Utility.handleCitiesResponse(coolWeatherDB,response,selectedProvince.getId());
-                }else if ("country".equals(type)){
-                    result = Utility.handleCountriesResponse(coolWeatherDB, response,selectedCity.getId());
+                }else if ("county".equals(type)){
+                    result = Utility.handleCountiesResponse(coolWeatherDB, response, selectedCity.getId());
                 }
-
+                Log.d("LCL","result:"+result);
                 if (result){
                     //
                     runOnUiThread(new Runnable() {
@@ -158,8 +168,8 @@ public class ChooseAreaActivity extends ActionBarActivity {
                                 queryProvinces();
                             }else if ("city".equals(type)){
                                 queryCities();
-                            }else if ("country".equals(type)){
-                                queryCountries();
+                            }else if ("county".equals(type)){
+                                queryCounties();
                             }
                         }
                     });
@@ -209,7 +219,7 @@ public class ChooseAreaActivity extends ActionBarActivity {
      */
     @Override
     public void onBackPressed() {
-        if(currentLevel == LEVEL_COUNTRY){
+        if(currentLevel == LEVEL_County){
             queryCities();
         }else if (currentLevel ==LEVEL_CITY){
             queryProvinces();
