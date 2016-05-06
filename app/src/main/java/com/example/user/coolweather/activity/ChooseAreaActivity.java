@@ -3,7 +3,6 @@ package com.example.user.coolweather.activity;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -63,16 +62,16 @@ public class ChooseAreaActivity extends Activity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int index, long l) {
-                if (currentLevel == LEVEL_PROVINCE) {
-                    selectedProvince = provinceList.get(index);
-                    queryCities();
-                } else if (currentLevel == LEVEL_CITY) {
-                    selectedCity = cityList.get(index);
-                    queryCounties();
+                if (currentLevel == LEVEL_PROVINCE){
+                   selectedProvince = provinceList.get(index);
+                   queryCities();
+               }else if (currentLevel == LEVEL_CITY){
+                   selectedCity = cityList.get(index);
+                   queryCounties();
                }
             }
         });
-       // queryProvinces();
+        queryProvinces();
     }
 
 
